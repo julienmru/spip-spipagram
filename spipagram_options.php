@@ -11,7 +11,12 @@ if (!defined("_ECRIRE_INC_VERSION")) return;
 function spipagram_import(){
 	include_spip('inc/config');
 
-	$_rubrique = intval(lire_config('spipagram/config/rubrique'));
+	if ($_config_rubrique = lire_config('spipagram/config/rubrique')) {
+		$_rubrique = explode('|', $_config_rubrique[0]);
+		$_rubrique = intval($_rubrique[1]);
+	} else {
+		$_rubrique = FALSE;
+	}
 	$_auteur = intval(lire_config('spipagram/config/auteur'));
 	$_hashtag = ltrim(lire_config('spipagram/config/hashtag'), '#');
 	$_statut = lire_config('spipagram/config/statut');
