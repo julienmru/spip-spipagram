@@ -85,6 +85,7 @@ function spipagram_import(){
 		}
 
 		if (isset($old_id_auteur)) $GLOBALS['visiteur_session']['id_auteur'] = $old_id_auteur;
+		else unset($GLOBALS['visiteur_session']['id_auteur']);
 
 	} else {
 
