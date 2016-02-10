@@ -22,7 +22,11 @@ function spipagram_import(){
 	$_statut = lire_config('spipagram/config/statut');
 	$_mots = lire_config('spipagram/config/mots');
 
-	if (!$_rubrique || !$_auteur || !$_hashtag || !$_statut) return FALSE;
+	if (!$_rubrique || !$_auteur || !$_hashtag || !$_statut) {
+		spip_log('Plugin non configuré', 'spipagram'._LOG_DEBUG);
+		return FALSE;
+	}
+
 
 	include_spip('action/editer_article');
 	include_spip('action/editer_liens');
@@ -37,7 +41,7 @@ function spipagram_import(){
 	if ($_items = inc_rss_to_array_dist($_distant)) {
 
 		// on règle l'ID auteur pour qu’il puisse créer des article		
-		$old_id_auteur = $GLOBALS['visiteur_session']['id_auteur'];
+		if (isset($GLOBALS['visiteur_session']) && isset($GLOBALS['visiteur_session']['id_auteur'])) $old_id_auteur = $GLOBALS['visiteur_session']['id_auteur'];
 		$GLOBALS['visiteur_session']['id_auteur'] = lire_meta('spipagram/config/auteur');
 
 		foreach($_items as $_item) {
@@ -54,26 +58,33 @@ function spipagram_import(){
 
 			if ($row = sql_fetsel('id_article', 'spip_articles', 'id_rubrique = '.$_rubrique.' AND url_site = '.sql_quote($article['url_site']))) {
 				$id_article = $row['id_article'];
+				spip_log('Article trouvé pour '.$article['url_site'].' => '.$id_article, 'spipagram'._LOG_INFO);
 			} else {
-				spip_log('spipagram', 'Insituer article pour '.$article['url_site']);
+				spip_log('Insituer article pour '.$article['url_site'], 'spipagram'._LOG_INFO);
 				$id_article = article_inserer($article['id_rubrique']);
 				article_instituer($id_article, array('statut' => $article['statut']), true);
 				if ($id_article) {
-					spip_log('spipagram', 'Màj des données pour '.$article['url_site']);
+					spip_log('Article trouvé pour '.$article['url_site'].' => '.$id_article, 'spipagram'._LOG_INFO);
+					spip_log('Màj des données pour '.$id_article, 'spipagram'._LOG_INFO);
 					sql_updateq('spip_articles', $article, "id_article = $id_article");
+				} else {
+					spip_log('Impossible de créer l’article', 'spipagram'._LOG_CRITIQUE);
 				}
 				if ($_mots) {
-					spip_log('spipagram', 'Association des mots-clés pour '.$article['url_site']);
+					spip_log('Association des mots-clés pour '.$article['url_site'], 'spipagram'._LOG_INFO);
 					foreach($_mots as $id_mot) objet_associer(array('mot' => $id_mot), array('article' => $id_article));
 				}
 			}
 			if ($article_logo && !is_file('./IMG/arton'.$id_article.'.jpg')) {
-				spip_log('spipagram', 'Màj du logo pour '.$article['url_site']);
+				spip_log('Màj du logo pour '.$id_article.' depuis '.$article_logo, 'spipagram'._LOG_INFO);
 				recuperer_url($article_logo, array('file' => './IMG/arton'.$id_article.'.jpg'));
+				if (!is_file('./IMG/arton'.$id_article.'.jpg')) {
+					spip_log('Impossible de copier le logo', 'spipagram'._LOG_AVERTISSEMENT);
+				}
 			}
 		}
 
-		$GLOBALS['visiteur_session']['id_auteur'] = $old_id_auteur;
+		if (isset($old_id_auteur)) $GLOBALS['visiteur_session']['id_auteur'] = $old_id_auteur;
 
 	} else {
 
