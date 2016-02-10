@@ -60,24 +60,23 @@ function spipagram_import(){
 				$id_article = $row['id_article'];
 				spip_log('Article trouvé pour '.$article['url_site'].' => '.$id_article, 'spipagram'._LOG_INFO);
 			} else {
-				spip_log('Insituer article pour '.$article['url_site'], 'spipagram'._LOG_INFO);
 				$id_article = article_inserer($article['id_rubrique']);
 				article_instituer($id_article, array('statut' => $article['statut']), true);
 				if ($id_article) {
-					spip_log('Article trouvé pour '.$article['url_site'].' => '.$id_article, 'spipagram'._LOG_INFO);
-					spip_log('Màj des données pour '.$id_article, 'spipagram'._LOG_INFO);
+					spip_log('Article créé pour '.$article['url_site'].' => '.$id_article, 'spipagram'._LOG_INFO);
+					spip_log('Màj des données pour l’article '.$id_article, 'spipagram'._LOG_INFO);
 					sql_updateq('spip_articles', $article, "id_article = $id_article");
 				} else {
-					spip_log('Impossible de créer l’article', 'spipagram'._LOG_CRITIQUE);
+					spip_log('Impossible de créer l’article pour '.$article['url_site'], 'spipagram'._LOG_CRITIQUE);
 				}
 				if ($_mots) {
-					spip_log('Association des mots-clés pour '.$article['url_site'], 'spipagram'._LOG_INFO);
+					spip_log('Association des mots-clés pour l’article '.$id_article, 'spipagram'._LOG_INFO);
 					foreach($_mots as $id_mot) objet_associer(array('mot' => $id_mot), array('article' => $id_article));
 				}
 			}
 			if ($article_logo && !is_file('./IMG/arton'.$id_article.'.jpg')) {
-				spip_log('Màj du logo pour '.$id_article.' depuis '.$article_logo, 'spipagram'._LOG_INFO);
-				recuperer_url($article_logo, array('file' => './IMG/arton'.$id_article.'.jpg'));
+				spip_log('Màj du logo pour l’article '.$id_article.' depuis '.$article_logo, 'spipagram'._LOG_INFO);
+				copie_locale($article_logo, 'auto', './IMG/arton'.$id_article.'.jpg');
 				if (!is_file('./IMG/arton'.$id_article.'.jpg')) {
 					spip_log('Impossible de copier le logo', 'spipagram'._LOG_AVERTISSEMENT);
 				}
