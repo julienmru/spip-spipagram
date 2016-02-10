@@ -39,7 +39,7 @@ function spipagram_import(){
 
 			$article = array();
 			$article['titre'] = $_item['lesauteurs'];
-			$article['date'] = date('Y-m-d H:i:s', strtotime($item['pubdate']));
+			$article['date'] = date('Y-m-d H:i:s', $_item['date']);
 			$article['texte'] = $_item['titre'];
 			$article['id_rubrique'] = $_rubrique;
 			$article['url_site'] = $_item['url'];
@@ -57,9 +57,10 @@ function spipagram_import(){
 					spip_log('spipagram', 'Màj des données pour '.$article['url_site']);
 					sql_updateq('spip_articles', $article, "id_article = $id_article");
 				}
-			}
-			if ($_mots) {
-				foreach($_mots as $id_mot) objet_associer(array('mot' => $id_mot), array('article' => $id_article));
+				if ($_mots) {
+					spip_log('spipagram', 'Association des mots-clés pour '.$article['url_site']);
+					foreach($_mots as $id_mot) objet_associer(array('mot' => $id_mot), array('article' => $id_article));
+				}
 			}
 			if ($article_logo && !is_file('./IMG/arton'.$id_article.'.jpg')) {
 				spip_log('spipagram', 'Màj du logo pour '.$article['url_site']);
