@@ -65,8 +65,6 @@ function spipagram_import(){
 				spip_log('spipagram', 'Màj du logo pour '.$article['url_site']);
 				recuperer_url($article_logo, array('file' => './IMG/arton'.$id_article.'.jpg'));
 			}
-
-			var_dump($_item);exit;
 		}
 
 		$GLOBALS['visiteur_session']['id_auteur'] = $old_id_auteur;
