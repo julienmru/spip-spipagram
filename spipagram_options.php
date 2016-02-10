@@ -9,15 +9,18 @@
 if (!defined("_ECRIRE_INC_VERSION")) return;
 
 function spipagram_import(){
-	include_spip('ecrire/action/editer_article');
 	include_spip('inc/config');
 
-	$_rubrique = lire_config('spipagram/config/rubrique');
-	$_auteur = lire_config('spipagram/config/auteur');
+	$_rubrique = intval(lire_config('spipagram/config/rubrique'));
+	$_auteur = intval(lire_config('spipagram/config/auteur'));
 	$_hashtag = ltrim(lire_config('spipagram/config/hashtag'), '#');
 	$_statut = lire_config('spipagram/config/statut');
+	$_mots = lire_config('spipagram/config/mots');
 
 	if (!$_rubrique || !$_auteur || !$_hashtag || !$_statut) return FALSE;
+
+	include_spip('action/editer_article');
+	include_spip('action/editer_liens');
 
 	$_rss = 'http://iconosquare.com/tagFeed/'.rawurlencode($_hashtag);
 	
@@ -44,19 +47,26 @@ function spipagram_import(){
 
 			$article_logo = extraire_attribut(extraire_balise($_item['descriptif'], 'img'), 'src');
 
-			if (!sql_fetsel('id_article,id_rubrique,statut', 'spip_articles', 'url_site = '.sql_quote($article['url_site']))) {
-				spip_log('statigram', 'Insituer article pour '.$article['url_site']);
+			if ($row = sql_fetsel('id_article', 'spip_articles', 'id_rubrique = '.$_rubrique.' AND url_site = '.sql_quote($article['url_site']))) {
+				$id_article = $row['id_article'];
+			} else {
+				spip_log('spipagram', 'Insituer article pour '.$article['url_site']);
 				$id_article = article_inserer($article['id_rubrique']);
 				article_instituer($id_article, array('statut' => $article['statut']), true);
 				if ($id_article) {
-					spip_log('statigram', 'Màj des données pour '.$article['url_site']);
+					spip_log('spipagram', 'Màj des données pour '.$article['url_site']);
 					sql_updateq('spip_articles', $article, "id_article = $id_article");
 				}
 			}
+			if ($_mots) {
+				foreach($_mots as $id_mot) objet_associer(array('mot' => $id_mot), array('article' => $id_article));
+			}
 			if ($article_logo && !is_file('./IMG/arton'.$id_article.'.jpg')) {
-				spip_log('statigram', 'Màj du logo pour '.$article['url_site']);
+				spip_log('spipagram', 'Màj du logo pour '.$article['url_site']);
 				recuperer_url($article_logo, array('file' => './IMG/arton'.$id_article.'.jpg'));
 			}
+
+			var_dump($_item);exit;
 		}
 
 		$GLOBALS['visiteur_session']['id_auteur'] = $old_id_auteur;

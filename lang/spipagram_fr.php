@@ -9,6 +9,7 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	'label_rubrique' => 'Rubrique cible',
 	'label_auteur' => 'Auteur des articles',
 	'label_statut' => 'Statut',
+	'label_mots' => 'Mot(s) clé(s) associé(s)',
 
 );
 
