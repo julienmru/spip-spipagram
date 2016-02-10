@@ -1,0 +1,25 @@
+<div class="formulaire_spip formulaire_configurer_spipagram">
+
+[<p class="reponse_formulaire reponse_formulaire_ok">(#ENV*{message_ok})</p>]
+[<p class="reponse_formulaire reponse_formulaire_erreur">(#ENV*{message_erreur})</p>]
+
+
+<form action='#ENV{action}' method='post'>
+        #ACTION_FORMULAIRE{#ENV{action}}
+        <ul>
+		[(#SAISIE{input, hashtag, label=<:spipagram:label_hashtag:>, obligatoire=oui})]
+		[(#SAISIE{selecteur_rubrique, rubrique, label=<:spipagram:label_rubrique:>, obligatoire=oui})]
+		[(#SAISIE{auteurs, auteur, label=<:spipagram:label_auteur:>, obligatoire=oui})]
+		[(#SAISIE{selection, statut, label=<:spipagram:label_statut:>, obligatoire=oui, datas=#ARRAY{
+			prepa,<:texte_statut_en_cours_redaction:>,
+			prop,<:texte_statut_propose_evaluation:>,
+			publie,<:texte_statut_publie:>}})]
+		</ul>
+
+		<input type="hidden" name="_meta_casier" value="spipagram/config" />
+
+		<p class="boutons"><input type="submit" class="submit" value="<:valider:>" /></p>
+
+</form>
+
+</div>

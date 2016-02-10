@@ -1,0 +1,20 @@
+<paquet
+	prefix="spipagram"
+	categorie="divers"
+	version="1.0.0"
+	etat="dev"
+	compatibilite="[3.1.0;3.1.*]"
+	documentation=""
+>
+
+	<nom>Spipagram</nom>
+
+	<auteur lien="http://www.cahri.com">Julien Tessier, Agence Cahri</auteur>
+
+	<licence>GNU/GPL</licence>
+	
+	<pipeline nom="taches_generales_cron" inclure="spipagram_pipelines.php" />
+
+	<necessite nom="saisies" />
+
+</paquet>
