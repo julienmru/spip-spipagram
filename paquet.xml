@@ -4,7 +4,7 @@
 	version="1.0.0"
 	etat="stable"
 	compatibilite="[3.1.0;3.1.*]"
-	documentation=""
+	documentation="http://contrib.spip.net/spipagram"
 >
 
 	<nom>Spipagram</nom>
