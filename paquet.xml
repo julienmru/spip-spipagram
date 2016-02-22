@@ -5,6 +5,7 @@
 	etat="stable"
 	compatibilite="[3.0.0;3.1.*]"
 	documentation="http://contrib.spip.net/spipagram"
+	logo="images/logo_spipagram_32.png"
 >
 
 	<nom>Spipagram</nom>
