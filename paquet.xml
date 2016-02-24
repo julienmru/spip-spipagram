@@ -1,7 +1,7 @@
 <paquet
 	prefix="spipagram"
 	categorie="multimedia"
-	version="1.0.0"
+	version="1.0.1"
 	etat="stable"
 	compatibilite="[3.0.0;3.1.*]"
 	documentation="http://contrib.spip.net/spipagram"
@@ -16,6 +16,6 @@
 	
 	<pipeline nom="taches_generales_cron" inclure="spipagram_pipelines.php" />
 
-	<necessite nom="saisies" />
+	<necessite nom="saisies" compatibilite="[2.5.29;]" />
 
 </paquet>
