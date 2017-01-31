@@ -21,8 +21,9 @@ function spipagram_import(){
 	$_hashtag = ltrim(lire_config('spipagram/config/hashtag'), '#');
 	$_statut = lire_config('spipagram/config/statut');
 	$_mots = lire_config('spipagram/config/mots');
+	$_token = lire_config('spipagram/config/token');
 
-	if (!$_rubrique || !$_auteur || !$_hashtag || !$_statut) {
+	if (!$_rubrique || !$_auteur || !$_hashtag || !$_statut || !$_token) {
 		spip_log('Plugin non configuré', 'spipagram'._LOG_DEBUG);
 		return FALSE;
 	}
@@ -31,30 +32,32 @@ function spipagram_import(){
 	include_spip('action/editer_article');
 	include_spip('action/editer_liens');
 
-	$_rss = 'http://iconosquare.com/tagFeed/'.rawurlencode($_hashtag);
+	$_rss = 'https://websta.me/rss/tag/'.rawurlencode($_hashtag);
 	
 	include_spip('ecrire/iterateur/data');
 	include_spip('inc/distant');
 
 	$_distant = recuperer_page($_rss, true);
 
-	if ($_items = inc_rss_to_array_dist($_distant)) {
+	if ($_result = json_decode(file_get_contents('https://api.instagram.com/v1/tags/kabardock/media/recent?access_token=245157508.ba4c844.638763c59c9e469fa6800ba03b786e39'))) {
 
 		// on règle l'ID auteur pour qu’il puisse créer des article		
 		if (isset($GLOBALS['visiteur_session']) && isset($GLOBALS['visiteur_session']['id_auteur'])) $old_id_auteur = $GLOBALS['visiteur_session']['id_auteur'];
 		$GLOBALS['visiteur_session']['id_auteur'] = lire_meta('spipagram/config/auteur');
 
+		$_items = $_result->data;
+
 		foreach($_items as $_item) {
 
 			$article = array();
-			$article['titre'] = $_item['lesauteurs'];
-			$article['date'] = date('Y-m-d H:i:s', $_item['date']);
-			$article['texte'] = $_item['titre'];
+			$article['titre'] = $_item->user->username;
+			$article['date'] = date('Y-m-d H:i:s', $_item->created_time);
+			$article['texte'] = $_item->caption->text;
 			$article['id_rubrique'] = $_rubrique;
-			$article['url_site'] = $_item['url'];
+			$article['url_site'] = $_item->link;
 			$article['statut'] = $_statut;
 
-			$article_logo = extraire_attribut(extraire_balise($_item['descriptif'], 'img'), 'src');
+			$article_logo = $_item->images->standard_resolution->url;
 
 			if ($row = sql_fetsel('id_article', 'spip_articles', 'id_rubrique = '.$_rubrique.' AND url_site = '.sql_quote($article['url_site']))) {
 				$id_article = $row['id_article'];

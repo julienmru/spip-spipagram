@@ -7,6 +7,7 @@
 <form action='#ENV{action}' method='post'>
         #ACTION_FORMULAIRE{#ENV{action}}
         <ul>
+		[(#SAISIE{input, token, label=<:spipagram:label_token:>, obligatoire=oui, explication=<:spipagram:explication_token:>})]
 		[(#SAISIE{input, hashtag, label=<:spipagram:label_hashtag:>, obligatoire=oui})]
 		[(#SAISIE{selecteur_rubrique, rubrique, label=<:spipagram:label_rubrique:>, obligatoire=oui})]
 		[(#SAISIE{auteurs, auteur, label=<:spipagram:label_auteur:>, obligatoire=oui})]
