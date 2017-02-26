@@ -10,7 +10,7 @@ if (!defined("_ECRIRE_INC_VERSION")) return;
 
 function check_instagram_connectivity($_token = '') {
 	if (empty($_token)) {
-		return '<strong class="erreur_message-plugins">Missing token</strong>';
+		return '<strong style="color:#f00">Missing token</strong>';
 	} else {
 		$opts = array('http' => array('ignore_errors' => true));
 		$context = stream_context_create($opts);
