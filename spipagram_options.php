@@ -8,6 +8,30 @@
 
 if (!defined("_ECRIRE_INC_VERSION")) return;
 
+function check_instagram_connectivity($_token = '') {
+	if (empty($_token)) {
+		return '<strong class="erreur_message-plugins">Missing token</strong>';
+	} else {
+		$opts = array('http' => array('ignore_errors' => true));
+		$context = stream_context_create($opts);
+		if ($_remote_data = @file_get_contents('https://api.instagram.com/v1/tags/test/media/recent?access_token=' . $_token, false, $context)) {
+			if ($_parsed_data = json_decode($_remote_data)) {
+				if ($_parsed_data->meta->code != 200) {
+					if (isset($_parsed_data->meta->error_message)) return '<strong style="color:#f00">' . $_parsed_data->meta->error_message . '</strong>';
+					else return '<strong style="color:#f00">Instagram error #' . $_parsed_data->meta->code . '</strong>';
+				} else {
+					return 'OK';
+				}
+			} else {
+				return '<strong style="color:#f00">JSON decoding error</strong>';
+			}
+		} else {
+			$error = error_get_last();
+			return '<strong style="color:#f00">Transport error (' . $error['message'] . ')</strong>';
+		}
+	}
+}
+
 function spipagram_import(){
 	include_spip('inc/config');
 
@@ -17,6 +41,7 @@ function spipagram_import(){
 	} else {
 		$_rubrique = FALSE;
 	}
+
 	$_auteur = intval(lire_config('spipagram/config/auteur'));
 	$_hashtag = ltrim(lire_config('spipagram/config/hashtag'), '#');
 	$_statut = lire_config('spipagram/config/statut');
@@ -39,7 +64,7 @@ function spipagram_import(){
 
 	$_distant = recuperer_page($_rss, true);
 
-	if ($_result = json_decode(file_get_contents('https://api.instagram.com/v1/tags/kabardock/media/recent?access_token=245157508.ba4c844.638763c59c9e469fa6800ba03b786e39'))) {
+	if ($_result = json_decode(file_get_contents('https://api.instagram.com/v1/tags/'.rawurldecode($_hashtag).'/media/recent?access_token='.$_token))) {
 
 		// on règle l'ID auteur pour qu’il puisse créer des article		
 		if (isset($GLOBALS['visiteur_session']) && isset($GLOBALS['visiteur_session']['id_auteur'])) $old_id_auteur = $GLOBALS['visiteur_session']['id_auteur'];
@@ -91,7 +116,7 @@ function spipagram_import(){
 
 	} else {
 
-		spip_log("Fichier $_rss non parsable", 'spipagram'._LOG_CRITIQUE);
+		spip_log("Impossible de recupérer les données Instagram", 'spipagram'._LOG_CRITIQUE);
 
 		return FALSE;
 
