@@ -9,6 +9,12 @@
 if (!defined("_ECRIRE_INC_VERSION")) return;
 
 function spipagram_taches_generales_cron($taches){
-	$taches['spipagram_import'] = 3600;
+	include_spip('inc/config');
+
+	if ($_frequence = intval(lire_config('spipagram/config/frequence'))) {
+		$taches['spipagram_import'] = max(300, (int)$_frequence);
+	} else {
+		$taches['spipagram_import'] = 3600;
+	}
 	return $taches;
 }

@@ -109,6 +109,20 @@ function spipagram_import(){
 					spip_log('Impossible de copier le logo', 'spipagram'._LOG_AVERTISSEMENT);
 				}
 			}
+			if (isset($_item->videos->standard_resolution->url) && sql_countsel('spip_documents', 'objet = "article" and id_objet = '.$id_article) == 0) {
+				spip_log('Ajout de la vidéo pour l’article '.$id_article.' depuis '.$_item->videos->standard_resolution->url, 'spipagram'._LOG_INFO);
+				$ajouter_documents = charger_fonction('ajouter_documents', 'action');
+				$file = [
+					'name' => basename($_item->videos->standard_resolution->url),
+					'tmp_name' => $_item->videos->standard_resolution->url,
+					'distant' => TRUE,
+					'mode '=> 'document',
+				];
+
+				if (!($ajouter_documents(0, [$file], 'article', $id_article, $mode))) {
+					spip_log('Impossible de copier la vidéo', 'spipagram'._LOG_AVERTISSEMENT);
+				}
+			}
 		}
 
 		if (isset($old_id_auteur)) $GLOBALS['visiteur_session']['id_auteur'] = $old_id_auteur;

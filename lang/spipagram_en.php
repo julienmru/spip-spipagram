@@ -13,6 +13,8 @@ $GLOBALS[$GLOBALS['idx_lang']] = array(
 	'label_auteur' => 'Articles’ author',
 	'label_statut' => 'Status',
 	'label_mots' => 'Attached keyword(s)',
+	'label_frequence' => 'Import frequency',
+	'explication_frequence' => 'Import frequency in seconds<br><strong>Warning:</strong> if you change the frequency, you will need to reset the job queue in the <a href="?exec=job_queue">List of tasks</a> menu, so that change is effective immediately.',
 	'debug_spipagram' => 'Debug Spipagram',
 	'non_configure' => 'not configured',
 	'connexion_a_instagram' => 'Connectivity to Instagram',
