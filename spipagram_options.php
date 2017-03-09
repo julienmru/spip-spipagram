@@ -109,9 +109,10 @@ function spipagram_import(){
 					spip_log('Impossible de copier le logo', 'spipagram'._LOG_AVERTISSEMENT);
 				}
 			}
-			if (isset($_item->videos->standard_resolution->url) && sql_countsel('spip_documents', 'objet = "article" and id_objet = '.$id_article) == 0) {
+			if (isset($_item->videos->standard_resolution->url) && sql_countsel('spip_documents_liens', 'objet = "article" AND id_objet = '.$id_article) == 0) {
 				spip_log('Ajout de la vidéo pour l’article '.$id_article.' depuis '.$_item->videos->standard_resolution->url, 'spipagram'._LOG_INFO);
 				$ajouter_documents = charger_fonction('ajouter_documents', 'action');
+				$ajouter_un_document = charger_fonction('ajouter_un_document', 'action');
 				$file = [
 					'name' => basename($_item->videos->standard_resolution->url),
 					'tmp_name' => $_item->videos->standard_resolution->url,
@@ -119,7 +120,13 @@ function spipagram_import(){
 					'mode '=> 'document',
 				];
 
-				if (!($ajouter_documents(0, [$file], 'article', $id_article, $mode))) {
+				if (($id_document = $ajouter_un_document('new', $file, 'article', $id_article, 'document'))) {
+					// if we have a document which couldn't be linked by SPIP for some reason, force the link
+					if (sql_countsel('spip_documents_liens', 'objet = "article" AND id_objet = '.$id_article) == 0) {
+						spip_log("Liaison du document $id_document avec l’article $id_article", 'spipagram'._LOG_INFO);
+						sql_insertq('spip_documents_liens', array('objet' => 'article', 'id_objet' => $id_article, 'id_document' => $id_document));
+					}
+				} else {
 					spip_log('Impossible de copier la vidéo', 'spipagram'._LOG_AVERTISSEMENT);
 				}
 			}
