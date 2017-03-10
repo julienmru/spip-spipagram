@@ -87,7 +87,10 @@ function spipagram_import(){
 			if ($row = sql_fetsel('id_article', 'spip_articles', 'id_rubrique = '.$_rubrique.' AND url_site = '.sql_quote($article['url_site']))) {
 				$id_article = $row['id_article'];
 				spip_log('Article trouvé pour '.$article['url_site'].' => '.$id_article, 'spipagram'._LOG_INFO);
+				spip_log('Màj des données pour l’article '.$id_article, 'spipagram'._LOG_INFO);
+				sql_updateq('spip_articles', $article, "id_article = $id_article");
 			} else {
+				$article['statut'] = $_statut;
 				$id_article = article_inserer($article['id_rubrique']);
 				article_instituer($id_article, array('statut' => $article['statut']), true);
 				if ($id_article) {
