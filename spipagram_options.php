@@ -78,7 +78,6 @@ function spipagram_import(){
 				$article['texte'] = $_item->caption->text;
 				$article['id_rubrique'] = $_rubrique;
 				$article['url_site'] = $_item->link;
-				$article['statut'] = $_statut;
 
 				$article_logo = $_item->images->standard_resolution->url;
 
