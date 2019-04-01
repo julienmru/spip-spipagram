@@ -1,6 +1,7 @@
 <h1><:spipagram:debug_spipagram:></h1>
-<p><:spipagram:label_token:> : [(#CONFIG{spipagram/config/token}|sinon{<strong style="color:#f00"><:spipagram:non_configure:></strong>})]</p>
+<p><:spipagram:label_login:> : [(#CONFIG{spipagram/config/login}|sinon{<strong style="color:#f00"><:spipagram:non_configure:></strong>})]</p>
+<p><:spipagram:label_password:> : [(#CONFIG{spipagram/config/password}|?{••••••••,<strong style="color:#f00"><:spipagram:non_configure:></strong>})]</p>
 <p><:spipagram:label_auteur:> : [(#CONFIG{spipagram/config/auteur}|sinon{<strong style="color:#f00"><:spipagram:non_configure:></strong>})]</p>
 <p><:spipagram:label_hashtag:> : [(#CONFIG{spipagram/config/hashtag}|sinon{<strong style="color:#f00"><:spipagram:non_configure:></strong>})]</p>
 <p><:spipagram:label_statut:> : [(#CONFIG{spipagram/config/statut}|sinon{<strong style="color:#f00"><:spipagram:non_configure:></strong>})]</p>
-<p><:spipagram:connexion_a_instagram:> : [(#CONFIG{spipagram/config/token}|check_instagram_connectivity)]</p>
+<p><:spipagram:connexion_a_instagram:> : [(#CONFIG{spipagram/config/login}|check_instagram_connectivity{#CONFIG{spipagram/config/password}})]</p>

@@ -8,27 +8,50 @@
 
 if (!defined("_ECRIRE_INC_VERSION")) return;
 
-function check_instagram_connectivity($_token = '') {
-	if (empty($_token)) {
-		return '<strong style="color:#f00">Missing token</strong>';
-	} else {
-		$opts = array('http' => array('ignore_errors' => true));
-		$context = stream_context_create($opts);
-		if ($_remote_data = @file_get_contents('https://api.instagram.com/v1/tags/test/media/recent?access_token=' . $_token, false, $context)) {
-			if ($_parsed_data = json_decode($_remote_data)) {
-				if ($_parsed_data->meta->code != 200) {
-					if (isset($_parsed_data->meta->error_message)) return '<strong style="color:#f00">' . $_parsed_data->meta->error_message . '</strong>';
-					else return '<strong style="color:#f00">Instagram error #' . $_parsed_data->meta->code . '</strong>';
-				} else {
-					return 'OK';
-				}
+
+function spipagram_scraper() {
+	require __DIR__ . '/lib/vendor/autoload.php';
+
+	include_spip('inc/distant');
+	$instagram = new \InstagramScraper\Instagram();
+	if($proxy = need_proxy('www.instagram.com')) {
+		$proxy = parse_url($proxy);
+		$conf = [
+		    'address' => $proxy['host'],
+		    'port'    => $proxy['port'],
+		    'tunnel'  => true,
+		    'timeout' => 30,
+		];
+		if (isset($proxy['user']) && isset($proxy['user'])) {
+			$conf['auth'] = [
+				'user' => $proxy['user'],
+				'method' => CURLAUTH_BASIC
+			];
+			if (isset($proxy['pass']) && isset($proxy['pass'])) {
+				$conf['auth']['pass'] = $proxy['pass'];
 			} else {
-				return '<strong style="color:#f00">JSON decoding error</strong>';
+				$conf['auth']['pass'] = '';
 			}
-		} else {
-			$error = error_get_last();
-			return '<strong style="color:#f00">Transport error (' . $error['message'] . ')</strong>';
 		}
+		$instagram->setProxy($conf);
+	}
+	return $instagram;
+}
+
+function check_instagram_connectivity($_login = '', $_pass = '') {
+	if (empty($_login)) {
+		return '<strong style="color:#f00">Missing login</strong>';
+	} elseif (empty($_pass)) {
+		return '<strong style="color:#f00">Missing password</strong>';
+	} else {
+		try {
+			$instagram = spipagram_scraper();
+			$instagram->withCredentials($_login, $_pass, _NOM_TEMPORAIRES_INACCESSIBLES)->login();
+			$medias = $instagram->getMediasByTag('test', 20);
+		} catch(Exception $e) {
+			return '<strong style="color:#f00">'.$e->getMessage().'</strong>';
+		}
+		return 'OK';
 	}
 }
 
@@ -47,39 +70,56 @@ function spipagram_import(){
 	array_walk($_hashtags, function (&$val) { $val = ltrim(trim($val), '#'); }); 
 	$_statut = lire_config('spipagram/config/statut');
 	$_mots = lire_config('spipagram/config/mots');
-	$_token = lire_config('spipagram/config/token');
+	$_login = lire_config('spipagram/config/login');
+	$_pass = lire_config('spipagram/config/password');
 
-	if (!$_rubrique || !$_auteur || !count($_hashtags) || !$_statut || !$_token) {
+
+	if (!$_rubrique || !$_auteur || !count($_hashtags) || !$_statut || !$_login || !$_pass) {
 		spip_log('Plugin non configuré', 'spipagram'._LOG_DEBUG);
 		return FALSE;
 	}
 
+	try {
+		$instagram = spipagram_scraper();
+		$instagram->withCredentials($_login, $_pass, _NOM_TEMPORAIRES_INACCESSIBLES)->login();
 
-	include_spip('action/editer_article');
-	include_spip('action/editer_liens');
-		
-	include_spip('inc/distant');
+		include_spip('action/editer_article');
+		include_spip('action/editer_liens');
+			
+		include_spip('inc/distant');
 
-	foreach($_hashtags as $_hashtag) {
+		foreach($_hashtags as $_hashtag) {
 
-		if ($_result = json_decode(file_get_contents('https://api.instagram.com/v1/tags/'.rawurldecode($_hashtag).'/media/recent?access_token='.$_token))) {
 
 			// on règle l'ID auteur pour qu’il puisse créer des article		
 			if (isset($GLOBALS['visiteur_session']) && isset($GLOBALS['visiteur_session']['id_auteur'])) $old_id_auteur = $GLOBALS['visiteur_session']['id_auteur'];
 			$GLOBALS['visiteur_session']['id_auteur'] = lire_meta('spipagram/config/auteur');
 
-			$_items = $_result->data;
+			if (substr($_hashtag, 0, 1) == '#') $_hashtag = substr($_hashtag, 1);
+			if (substr($_hashtag, 0, 1) == '@') {
+				$_user = substr($_hashtag, 1);
+				spip_log('Récupération du flux du user '.$_user, 'spipagram'._LOG_INFO);
+				$_items = $instagram->getMedias(rawurldecode($_user), 25);
+			} else {
+				$_user = FALSE;
+				spip_log('Récupération du flux du hashtag '.$_hashtag, 'spipagram'._LOG_INFO);
+				$_items = $instagram->getMediasByTag(rawurldecode($_hashtag), 20);
+			}
 
 			foreach($_items as $_item) {
 
 				$article = array();
-				$article['titre'] = $_item->user->username;
-				$article['date'] = date('Y-m-d H:i:s', $_item->created_time);
-				$article['texte'] = $_item->caption->text;
+				if ($_user) {
+					$article['titre'] = $_user;
+				} else {
+					$article['titre'] = $_item->getOwner()->getUsername();
+				}
+				$article['date'] = date('Y-m-d H:i:s', $_item->getCreatedTime());
+				$article['texte'] = $_item->getCaption();
 				$article['id_rubrique'] = $_rubrique;
-				$article['url_site'] = $_item->link;
+				$article['url_site'] = $_item->getLink();
 
-				$article_logo = $_item->images->standard_resolution->url;
+				$article_logo = $_item->getImageHighResolutionUrl();
 
 				if ($row = sql_fetsel('id_article', 'spip_articles', 'id_rubrique = '.$_rubrique.' AND url_site = '.sql_quote($article['url_site']))) {
 					$id_article = $row['id_article'];
@@ -102,20 +142,20 @@ function spipagram_import(){
 						foreach($_mots as $id_mot) objet_associer(array('mot' => $id_mot), array('article' => $id_article));
 					}
 				}
-				if ($article_logo && !is_file('./IMG/arton'.$id_article.'.jpg')) {
+				if ($article_logo && !is_file(_DIR_RACINE.'IMG/arton'.$id_article.'.jpg')) {
 					spip_log('Màj du logo pour l’article '.$id_article.' depuis '.$article_logo, 'spipagram'._LOG_INFO);
 					copie_locale($article_logo, 'auto', './IMG/arton'.$id_article.'.jpg');
-					if (!is_file('./IMG/arton'.$id_article.'.jpg')) {
+					if (!is_file(_DIR_RACINE.'IMG/arton'.$id_article.'.jpg')) {
 						spip_log('Impossible de copier le logo', 'spipagram'._LOG_AVERTISSEMENT);
 					}
 				}
-				if (isset($_item->videos->standard_resolution->url) && sql_countsel('spip_documents_liens', 'objet = "article" AND id_objet = '.$id_article) == 0) {
-					spip_log('Ajout de la vidéo pour l’article '.$id_article.' depuis '.$_item->videos->standard_resolution->url, 'spipagram'._LOG_INFO);
+				if ($_item->getType() == 'video' && sql_countsel('spip_documents_liens', 'objet = "article" AND id_objet = '.$id_article) == 0) {
+					spip_log('Ajout de la vidéo pour l’article '.$id_article.' depuis '.$_item->getVideoStandardResolutionUrl(), 'spipagram'._LOG_INFO);
 					$ajouter_documents = charger_fonction('ajouter_documents', 'action');
 					$ajouter_un_document = charger_fonction('ajouter_un_document', 'action');
 					$file = [
-						'name' => basename($_item->videos->standard_resolution->url),
-						'tmp_name' => $_item->videos->standard_resolution->url,
+						'name' => basename($_item->getVideoStandardResolutionUrl()),
+						'tmp_name' => $_item->getVideoStandardResolutionUrl(),
 						'distant' => TRUE,
 						'mode '=> 'document',
 					];
@@ -135,13 +175,11 @@ function spipagram_import(){
 			if (isset($old_id_auteur)) $GLOBALS['visiteur_session']['id_auteur'] = $old_id_auteur;
 			else unset($GLOBALS['visiteur_session']['id_auteur']);
 
-		} else {
-
-			spip_log("Impossible de recupérer les données Instagram", 'spipagram'._LOG_CRITIQUE);
-
-			return FALSE;
-
 		}
+
+	} catch (Exception $e) {
+
+		spip_log('Erreur rencontrée lors de l\'import: '.$e, 'spipagram'._LOG_CRITIQUE);
 
 	}
 

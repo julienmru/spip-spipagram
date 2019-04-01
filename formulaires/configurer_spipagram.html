@@ -7,7 +7,8 @@
 <form action='#ENV{action}' method='post'>
         #ACTION_FORMULAIRE{#ENV{action}}
         <ul>
-		[(#SAISIE{input, token, label=<:spipagram:label_token:>, obligatoire=oui, explication=<:spipagram:explication_token:>})]
+		[(#SAISIE{input, login, label=<:spipagram:label_login:>, obligatoire=oui})]
+		[(#SAISIE{input, password, type=password, label=<:spipagram:label_password:>, obligatoire=oui})]
 		[(#SAISIE{input, hashtag, label=<:spipagram:label_hashtag:>, obligatoire=oui, explication=<:spipagram:explication_hashtag:>})]
 		[(#SAISIE{selecteur_rubrique, rubrique, label=<:spipagram:label_rubrique:>, obligatoire=oui})]
 		[(#SAISIE{auteurs, auteur, label=<:spipagram:label_auteur:>, obligatoire=oui})]
